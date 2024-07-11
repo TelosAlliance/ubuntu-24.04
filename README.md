@@ -1,9 +1,9 @@
-# Ubuntu 22.04 LTS build container
+# Ubuntu 24.04 LTS build container
 
-This container is based on Ubuntu 22.04, but contains many additional packages for software development, some of which are not part of the official repositories.
+This container is based on Ubuntu 24.04, but contains many additional packages for software development, some of which are not part of the official repositories.
 It is intended to serve as build environment for many of our projects.
 
-DockerHub link: https://hub.docker.com/r/telosalliance/ubuntu-22.04
+DockerHub link: https://hub.docker.com/r/telosalliance/ubuntu-24.04
 
 ## Tools
 
@@ -38,7 +38,7 @@ It can be configured using the following environment variables, all of which are
 To run a CI job using this image, add the following to your `.gitlab-ci.yml` file under the target job:
 
 ```yaml
-image: telosalliance/ubuntu-22.04:latest
+image: telosalliance/ubuntu-24.04:latest
 tags:
  - docker
 ```
@@ -62,7 +62,7 @@ docker-%:
 		--env LINUX_GID=$(shell id -g) \
 		--env LINUX_DIR="$(PWD)" \
 		--mount "src=$(HOME),target=$(HOME),type=bind" \
-		telosalliance/ubuntu-22.04:latest \
+		telosalliance/ubuntu-24.04:latest \
 		make $(@:docker-%=%)
 ```
 

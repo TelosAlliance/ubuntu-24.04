@@ -101,6 +101,7 @@ apt-get install -y --no-install-recommends \
   device-tree-compiler \
   elfutils \
   file \
+  flex \
   gawk \
   gdb \
   gettext \

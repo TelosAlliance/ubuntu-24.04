@@ -134,6 +134,13 @@ apt-get install -y --no-install-recommends \
   vim \
   zip \
   zlib1g-dev
+# Additional requirements for XDP
+apt-get install -y \
+  llvm \
+  clang \
+  libelf-dev \
+  libelf1 \
+  libpcap-dev
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3-labs
 # vim:syntax=dockerfile
-FROM ubuntu:noble-20240605
+FROM ubuntu:noble-20240904.1
 
 # Set this before `apt-get` so that it can be done non-interactively
 ENV DEBIAN_FRONTEND noninteractive
@@ -18,7 +18,7 @@ ENV CARGO_HOME $RUST_HOME
 ENV RUSTUP_HOME $RUST_HOME/.rustup
 
 # NodeJS env
-ENV NODE_VERSION v20.15.1
+ENV NODE_VERSION v20.18.0
 ENV NODE_BUILD node-$NODE_VERSION-linux-x64
 ENV NODE_BIN /opt/node-$NODE_VERSION-linux-x64/bin
 
@@ -136,11 +136,13 @@ apt-get install -y --no-install-recommends \
   zlib1g-dev
 # Additional requirements for XDP
 apt-get install -y \
+  libbpf-dev \
   llvm \
   clang \
   libelf-dev \
   libelf1 \
-  libpcap-dev
+  libpcap-dev \
+  libc6-dev-i386
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF

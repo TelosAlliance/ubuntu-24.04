@@ -114,7 +114,6 @@ apt-get install -y --no-install-recommends \
   libboost-all-dev \
   libcurl4-openssl-dev \
   libgnutls28-dev \
-  libncurses5-dev \
   libsndfile1-dev \
   libssl-dev \
   libtool \
@@ -142,7 +141,12 @@ apt-get install -y \
   libelf-dev \
   libelf1 \
   libpcap-dev \
-  libc6-dev-i386
+  libc6-dev-i386 \
+  meson \
+  ninja-build \
+  python3-pyelftools \
+  libnuma-dev \
+  libxdp-dev
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF

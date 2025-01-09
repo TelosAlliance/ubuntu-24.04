@@ -10,8 +10,8 @@ image:
 	DOCKER_BUILDKIT=1 docker build $(ARGS) -t $(IMAGE):latest .
 
 push:
-	docker push $(IMAGE):$(TAG)
-	docker push $(IMAGE):latest
+	docker image push $(IMAGE):$(TAG)
+	docker image push $(IMAGE):latest
 
 lint:
 	docker run --rm -i hadolint/hadolint < Dockerfile

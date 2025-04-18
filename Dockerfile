@@ -73,7 +73,8 @@ cargo install cargo-bundle-licenses
 cargo install cargo-deny
 cargo install cargo-license
 cargo install cargo-lichking
-cargo install cargo-script
+# cargo-script is commented out because it doesn't compile with the latest Rust
+#cargo install cargo-script
 rustup target add x86_64-unknown-linux-musl
 rustup target add armv7-unknown-linux-gnueabihf
 rm -rf "$RUST_HOME/registry" "$RUST_HOME/git"
@@ -146,7 +147,8 @@ apt-get install -y \
   ninja-build \
   python3-pyelftools \
   libnuma-dev \
-  libxdp-dev
+  libxdp-dev \
+  sbsigntool
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF

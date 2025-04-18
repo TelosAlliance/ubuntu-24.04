@@ -75,6 +75,8 @@ cargo install cargo-license
 cargo install cargo-lichking
 # cargo-script is commented out because it doesn't compile with the latest Rust
 #cargo install cargo-script
+cargo install cargo-deb
+cargo install cargo-generate-rpm
 rustup target add x86_64-unknown-linux-musl
 rustup target add armv7-unknown-linux-gnueabihf
 rm -rf "$RUST_HOME/registry" "$RUST_HOME/git"
@@ -104,6 +106,7 @@ apt-get install -y --no-install-recommends \
   file \
   flex \
   gawk \
+  gcovr \
   gdb \
   gettext \
   git \
@@ -112,6 +115,7 @@ apt-get install -y --no-install-recommends \
   kmod \
   libasound2-dev \
   libavahi-compat-libdnssd-dev \
+  libbison-dev \
   libboost-all-dev \
   libcurl4-openssl-dev \
   libgnutls28-dev \
@@ -139,12 +143,14 @@ apt-get install -y \
   libbpf-dev \
   llvm \
   clang \
+  git-lfs \
   libelf-dev \
   libelf1 \
   libpcap-dev \
   libc6-dev-i386 \
   meson \
   ninja-build \
+  opus-tools \
   python3-pyelftools \
   libnuma-dev \
   libxdp-dev \

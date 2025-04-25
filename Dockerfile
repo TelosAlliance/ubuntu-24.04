@@ -143,18 +143,20 @@ apt-get install -y \
   libbpf-dev \
   llvm \
   clang \
+  efitools \
   git-lfs \
+  libc6-dev-i386 \
   libelf-dev \
   libelf1 \
+  libnuma-dev \
   libpcap-dev \
-  libc6-dev-i386 \
+  libxdp-dev \
   meson \
   ninja-build \
   opus-tools \
   python3-pyelftools \
-  libnuma-dev \
-  libxdp-dev \
-  sbsigntool
+  sbsigntool \
+  uuid-runtime
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF

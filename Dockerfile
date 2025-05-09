@@ -29,6 +29,8 @@ ENV PATH $GOPATH/bin:$GOROOT/bin:$RUST_HOME/bin:$NODE_BIN:$PATH
 # Do everything in one RUN command
 RUN /bin/bash <<EOF
 set -euxo pipefail
+# Enable support for adding 32-bit packages
+dpkg --add-architecture i386
 apt-get update
 # Install packages needed to set up third-party repositories
 apt-get install -y --no-install-recommends \
@@ -110,6 +112,7 @@ apt-get install -y --no-install-recommends \
   gdb \
   gettext \
   git \
+  git-lfs \
   gosu \
   jq \
   kmod \
@@ -138,6 +141,15 @@ apt-get install -y --no-install-recommends \
   vim \
   zip \
   zlib1g-dev
+# for 32-bit support
+apt-get install -y --no-install-recommends \
+  libc6:i386 libstdc++6:i386 lib32z1 \
+  gcc-multilib g++-multilib \
+  libgtest-dev:i386 \
+  libc6-dev:i386 \
+  libz-dev:i386 \
+  libglib2.0-dev:i386 \
+  libssl-dev:i386
 # Additional requirements for XDP
 apt-get install -y \
   libbpf-dev \

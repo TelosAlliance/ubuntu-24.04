@@ -9,8 +9,9 @@ ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
 # Golang env
-ENV GOROOT /opt/go
-ENV GOPATH $HOME/work/
+ENV GO_HOME /opt/go
+ENV GOCACHE $GO_HOME/go-cache
+ENV GOPATH  $GO_HOME/work
 
 # Rust env
 ENV RUST_HOME /opt/rust
@@ -61,7 +62,7 @@ curl -sSf https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 # Install other javascript package managers
 npm install -g yarn pnpm
 # Install newer version of Go than is included with Ubuntu
-curl -sSf https://dl.google.com/go/go1.19.linux-amd64.tar.gz | tar -xz -C /opt
+#curl -sSf https://dl.google.com/go/go1.19.linux-amd64.tar.gz | tar -xz -C /opt
 # Install Rust prereqs
 apt-get install -y --no-install-recommends \
   musl-tools
@@ -81,6 +82,9 @@ rustup target add x86_64-unknown-linux-musl
 rustup target add armv7-unknown-linux-gnueabihf
 rm -rf "$RUST_HOME/registry" "$RUST_HOME/git"
 chmod 777 "$RUST_HOME"
+# go directory
+mkdir -p "$GO_HOME"
+chmod 777 "$GO_HOME"
 # Install gstreamer
 apt-get install -y --no-install-recommends \
   gstreamer1.0-nice \
@@ -110,6 +114,7 @@ apt-get install -y --no-install-recommends \
   gdb \
   gettext \
   git \
+  golang \
   gosu \
   jq \
   kmod \

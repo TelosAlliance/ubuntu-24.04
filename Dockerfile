@@ -26,6 +26,9 @@ ENV NODE_BIN /opt/node-$NODE_VERSION-linux-x64/bin
 # Set PATH to include custom bin directories
 ENV PATH $GOPATH/bin:$GOROOT/bin:$RUST_HOME/bin:$NODE_BIN:$PATH
 
+ARG TARGETARCH
+RUN echo "***** Building for architecture: $TARGETARCH *****"
+
 # KEEP PACKAGES SORTED ALPHABETICALY
 # Do everything in one RUN command
 RUN /bin/bash <<EOF
@@ -44,7 +47,14 @@ apt-get install -y --no-install-recommends \
   unzip \
   wget
 # Install AWS cli
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+if [ "$TARGETARCH" = "amd64" ]; then \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+elif [ "$TARGETARCH" = "arm64" ]; then \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+else
+  echo "Unsupported architecture: $TARGETARCH"
+  exit 1
+fi
 unzip awscliv2.zip
 ./aws/install
 rm -rf awscliv2.zip aws
@@ -53,8 +63,8 @@ curl -sSf https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | 
 apt-add-repository 'deb https://apt.kitware.com/ubuntu/ jammy main'
 apt-get install -y --no-install-recommends \
   cmake
-# Use NodeSource's NodeJS 18.x repository
-curl -sSf https://deb.nodesource.com/setup_18.x | bash -
+# Use NodeSource's NodeJS repository
+curl -sSf https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y --no-install-recommends \
   nodejs
 # Install nvm binary
@@ -62,7 +72,14 @@ curl -sSf https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 # Install other javascript package managers
 npm install -g yarn pnpm
 # Install newer version of Go than is included with Ubuntu
-#curl -sSf https://dl.google.com/go/go1.19.linux-amd64.tar.gz | tar -xz -C /opt
+if [ "$TARGETARCH" = "amd64" ]; then \
+  curl -sSf https://dl.google.com/go/go1.24.4.linux-amd64.tar.gz | tar -xz -C /opt
+elif [ "$TARGETARCH" = "arm64" ]; then \
+  curl -sSf https://dl.google.com/go/go1.24.4.linux-arm64.tar.gz | tar -xz -C /opt
+else
+  echo "Unsupported architecture: $TARGETARCH"
+  exit 1
+fi
 # Install Rust prereqs
 apt-get install -y --no-install-recommends \
   musl-tools
@@ -74,12 +91,17 @@ cargo install cargo-bundle-licenses
 cargo install cargo-deny
 cargo install cargo-license
 cargo install cargo-lichking
-# cargo-script is commented out because it doesn't compile with the latest Rust
-#cargo install cargo-script
 cargo install cargo-deb
 cargo install cargo-generate-rpm
+if [ "$TARGETARCH" = "amd64" ]; then \
 rustup target add x86_64-unknown-linux-musl
-rustup target add armv7-unknown-linux-gnueabihf
+elif [ "$TARGETARCH" = "arm64" ]; then \
+rustup target add aarch64-unknown-linux-musl
+else
+  echo "Unsupported architecture: $TARGETARCH"
+  exit 1
+fi
+
 rm -rf "$RUST_HOME/registry" "$RUST_HOME/git"
 chmod 777 "$RUST_HOME"
 # go directory
@@ -114,7 +136,6 @@ apt-get install -y --no-install-recommends \
   gdb \
   gettext \
   git \
-  golang \
   gosu \
   jq \
   kmod \
@@ -150,7 +171,6 @@ apt-get install -y \
   clang \
   efitools \
   git-lfs \
-  libc6-dev-i386 \
   libelf-dev \
   libelf1 \
   libnuma-dev \
@@ -162,6 +182,21 @@ apt-get install -y \
   python3-pyelftools \
   sbsigntool \
   uuid-runtime
+# Install libc6-dev for cross-compilation
+if [ "$TARGETARCH" = "amd64" ]; then \
+  apt-get install -y \
+    libc6-dev-i386
+elif [ "$TARGETARCH" = "arm64" ]; then \
+  apt-get install -y \
+    libc6-dev-arm64-cross
+else
+  echo "Unsupported architecture: $TARGETARCH"
+  exit 1
+fi
+if [ "$TARGETARCH" = "arm64" ]; then \
+  mkdir -p /lib64
+  ln -s /lib/aarch64-linux-gnu /lib64
+fi
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF

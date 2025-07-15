@@ -6,12 +6,13 @@ TAG   ?= $(shell date +%Y-%m-%d)
 all: image
 
 image:
-	DOCKER_BUILDKIT=1 docker build $(ARGS) -t $(IMAGE):$(TAG) .
-	DOCKER_BUILDKIT=1 docker build $(ARGS) -t $(IMAGE):latest .
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE):multiarch-latest -t $(IMAGE):multiarch-$(TAG) --push .
+#	DOCKER_BUILDKIT=1 docker build $(ARGS) -t $(IMAGE):$(TAG) .
+#	DOCKER_BUILDKIT=1 docker build $(ARGS) -t $(IMAGE):latest .
 
-push:
-	docker image push $(IMAGE):$(TAG)
-	docker image push $(IMAGE):latest
+push: image
+#	docker image push $(IMAGE):$(TAG)
+#	docker image push $(IMAGE):latest
 
 lint:
 	docker run --rm -i hadolint/hadolint < Dockerfile

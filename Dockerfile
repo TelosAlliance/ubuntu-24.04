@@ -194,8 +194,8 @@ else
   exit 1
 fi
 if [ "$TARGETARCH" = "arm64" ]; then \
-  mkdir -p /lib64
-  ln -s /lib/aarch64-linux-gnu /lib64
+  ln -s /lib/aarch64-linux-gnu/ /lib64
+  ln -s /usr/lib/aarch64-linux-gnu/ /usr/lib64
 fi
 apt-get clean
 rm -rf /var/lib/apt/lists/*

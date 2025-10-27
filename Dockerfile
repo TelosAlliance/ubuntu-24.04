@@ -175,7 +175,8 @@ apt-get install -y --no-install-recommends \
   libglib2.0-dev \
   libgstreamer-plugins-bad1.0-dev \
   libjson-glib-dev \
-  libsoup2.4-dev
+  libsoup2.4-dev \
+  libsoup-3.0-dev
 
 # Install everything else
 apt-get install -y --no-install-recommends \

@@ -6,7 +6,7 @@ TAG   ?= $(shell date +%Y-%m-%d)
 all: image
 
 image:
-	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE):multiarch-latest -t $(IMAGE):multiarch-$(TAG) --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE):latest -t $(IMAGE):$(TAG) --push .
 #	DOCKER_BUILDKIT=1 docker build $(ARGS) -t $(IMAGE):$(TAG) .
 #	DOCKER_BUILDKIT=1 docker build $(ARGS) -t $(IMAGE):latest .
 

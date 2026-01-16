@@ -39,6 +39,8 @@ build_multi_arch:
     - main
     - master
     - tags
+  tags:
+    - docker
 
 # --- STAGE 2: MERGE & PUSH TO DOCKERHUB ---
 push_manifest:
@@ -73,6 +75,8 @@ push_manifest:
     - main
     - master
     - tags
+  tags:
+    - docker
 
 # --- STAGE 3: MIRROR (Unchanged) ---
 mirror_github:
@@ -99,3 +103,5 @@ mirror_github:
     - main
     - master
     - tags
+  tags:
+    - docker

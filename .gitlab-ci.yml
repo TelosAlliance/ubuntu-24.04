@@ -4,90 +4,77 @@ stages:
   - mirror
 
 variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: "/certs"
+  # Kaniko needs this variable to push to the GitLab registry reliably
+  DOCKER_CONFIG: /kaniko/.docker
   IMAGE_NAME: ${DH_ORG_NAME}/${DH_PROJECT_NAME}
-  PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
 
-# Build multi-arch Docker image
-build:
+# --- STAGE 1: PARALLEL BUILDS ---
+# This job runs 3 times automatically with different variables
+build_multi_arch:
   stage: build
-  image: docker:24-dind
-  services:
-    - docker:24-dind
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [""]
+  parallel:
+    matrix:
+      - PLATFORM: linux/amd64
+        ARCH_TAG: amd64
+      - PLATFORM: linux/arm64
+        ARCH_TAG: arm64
+      - PLATFORM: linux/arm/v7
+        ARCH_TAG: armv7
   before_script:
-    - docker info
-    - docker buildx create --use --name multiarch-builder
-    - docker buildx inspect --bootstrap
-    - echo "${DH_USER_TOKEN}" | docker login -u "${DH_USER_NAME}" --password-stdin
+    # Authenticate Kaniko with GitLab Registry
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
   script:
-    - echo "Building multi-arch image..."
-    # Build and push with commit SHA as temporary tag
-    #- |
-    #   docker buildx build \
-    #     --platform ${PLATFORMS} \
-    #     --tag ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA} \
-    #     --push \
-    #     .
-    - |
-      docker buildx build \
-        --platform ${PLATFORMS} \
-        --tag ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA} \
-        .
-    - echo "Build successful - image tagged as ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA}"
-  after_script:
-    - docker logout
+    - echo "Building for ${PLATFORM}..."
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --customPlatform "${PLATFORM}"
+      --destination "${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-${ARCH_TAG}"
+      --cache=true
   only:
     - main
     - master
     - tags
-  tags:
-    - docker
 
-# Push to DockerHub with date tag
-push_dockerhub:
+# --- STAGE 2: MERGE & PUSH TO DOCKERHUB ---
+push_manifest:
   stage: push
   image: docker:24-dind
   services:
     - docker:24-dind
   before_script:
     - docker info
+    # Login to Docker Hub (Destination)
     - echo "${DH_USER_TOKEN}" | docker login -u "${DH_USER_NAME}" --password-stdin
+    # Login to GitLab Registry (Source)
+    - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
   script:
     - export DATE_TAG=$(date +%Y-%m-%d)
-    - echo "Re-tagging and pushing with date tag ${DATE_TAG}..."
-    # Use buildx imagetools to create manifest with new tags
+    - echo "Merging multi-arch images into manifest..."
+    
+    # We use buildx imagetools to merge the 3 GitLab images into 1 DockerHub manifest
     - |
       docker buildx imagetools create \
         --tag ${IMAGE_NAME}:${DATE_TAG} \
         --tag ${IMAGE_NAME}:latest \
-        ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA}
-    - echo "Successfully pushed ${IMAGE_NAME}:${DATE_TAG} and ${IMAGE_NAME}:latest"
-    # Optional: Clean up temporary build tag
-    - echo "Cleaning up temporary tag..."
-    - |
-      docker run --rm \
-        -e DOCKERHUB_USERNAME="${DH_USER_NAME}" \
-        -e DOCKERHUB_TOKEN="${DH_USER_TOKEN}" \
-        -e DOCKERHUB_REPOSITORY="${CI_PROJECT_NAME}" \
-        -e DOCKERHUB_TAG="build-${CI_COMMIT_SHORT_SHA}" \
-        alpine sh -c '
-          apk add --no-cache curl jq
-          TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${DOCKERHUB_USERNAME}\", \"password\": \"${DOCKERHUB_TOKEN}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          curl -X DELETE -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/${DOCKERHUB_USERNAME}/${DOCKERHUB_REPOSITORY}/tags/build-${DOCKERHUB_TAG}/
-        '
+        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-amd64 \
+        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64 \
+        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-armv7
+
+    - echo "Successfully pushed multi-arch manifest to ${IMAGE_NAME}:latest"
   after_script:
     - docker logout
-  dependencies:
-    - build
+    - docker logout "${CI_REGISTRY}"
   only:
     - main
     - master
     - tags
-  tags:
-    - docker
 
-# Mirror to GitHub
+# --- STAGE 3: MIRROR (Unchanged) ---
 mirror_github:
   stage: mirror
   image: alpine:latest
@@ -102,15 +89,13 @@ mirror_github:
     - git config --global user.email "${GITLAB_USER_EMAIL}"
     - git config --global user.name "${GITLAB_USER_NAME}"
   script:
-    - echo "Fake mirroring to Github..."
-    #- echo "Mirroring to GitHub..."
+    - echo "Mirroring to GitHub..."
     - git clone --mirror ${CI_REPOSITORY_URL} repo-mirror
     - cd repo-mirror
+    # Uncomment these when ready
     #- git remote add github ${GITHUB_REPO_URL}
     #- git push --mirror github
   only:
     - main
     - master
     - tags
-  tags:
-    - docker

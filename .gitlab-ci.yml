@@ -41,6 +41,8 @@ build:
     - main
     - master
     - tags
+  tags:
+    - docker
 
 # Push to DockerHub with date tag
 push_dockerhub:
@@ -82,6 +84,8 @@ push_dockerhub:
     - main
     - master
     - tags
+  tags:
+    - docker
 
 # Mirror to GitHub
 mirror_github:
@@ -108,3 +112,5 @@ mirror_github:
     - main
     - master
     - tags
+  tags:
+    - docker

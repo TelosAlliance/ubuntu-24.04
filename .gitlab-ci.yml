@@ -1,0 +1,110 @@
+stages:
+  - build
+  - push
+  - mirror
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  IMAGE_NAME: ${DOCKERHUB_USERNAME}/${CI_PROJECT_NAME}
+  PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
+
+# Build multi-arch Docker image
+build:
+  stage: build
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  before_script:
+    - docker info
+    - docker buildx create --use --name multiarch-builder
+    - docker buildx inspect --bootstrap
+    - echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+  script:
+    - echo "Building multi-arch image..."
+    # Build and push with commit SHA as temporary tag
+    #- |
+    #   docker buildx build \
+    #     --platform ${PLATFORMS} \
+    #     --tag ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA} \
+    #     --push \
+    #     .
+    - |
+      docker buildx build \
+        --platform ${PLATFORMS} \
+        --tag ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA} \
+        .
+    - echo "Build successful - image tagged as ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA}"
+  after_script:
+    - docker logout
+  only:
+    - main
+    - master
+    - tags
+
+# Push to DockerHub with date tag
+push_dockerhub:
+  stage: push
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  before_script:
+    - docker info
+    - echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+  script:
+    - export DATE_TAG=$(date +%Y-%m-%d)
+    - echo "Re-tagging and pushing with date tag ${DATE_TAG}..."
+    # Use buildx imagetools to create manifest with new tags
+    - |
+      docker buildx imagetools create \
+        --tag ${IMAGE_NAME}:${DATE_TAG} \
+        --tag ${IMAGE_NAME}:latest \
+        ${IMAGE_NAME}:build-${CI_COMMIT_SHORT_SHA}
+    - echo "Successfully pushed ${IMAGE_NAME}:${DATE_TAG} and ${IMAGE_NAME}:latest"
+    # Optional: Clean up temporary build tag
+    - echo "Cleaning up temporary tag..."
+    - |
+      docker run --rm \
+        -e DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}" \
+        -e DOCKERHUB_TOKEN="${DOCKERHUB_TOKEN}" \
+        -e DOCKERHUB_REPOSITORY="${CI_PROJECT_NAME}" \
+        -e DOCKERHUB_TAG="build-${CI_COMMIT_SHORT_SHA}" \
+        alpine sh -c '
+          apk add --no-cache curl jq
+          TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${DOCKERHUB_USERNAME}\", \"password\": \"${DOCKERHUB_TOKEN}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
+          curl -X DELETE -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/${DOCKERHUB_USERNAME}/${DOCKERHUB_REPOSITORY}/tags/build-${DOCKERHUB_TAG}/
+        '
+  after_script:
+    - docker logout
+  dependencies:
+    - build
+  only:
+    - main
+    - master
+    - tags
+
+# Mirror to GitHub
+mirror_github:
+  stage: mirror
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git openssh-client
+    - eval $(ssh-agent -s)
+    - echo "${GITHUB_SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan github.com >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - git config --global user.email "${GITLAB_USER_EMAIL}"
+    - git config --global user.name "${GITLAB_USER_NAME}"
+  script:
+    - echo "Fake mirroring to Github..."
+    #- echo "Mirroring to GitHub..."
+    - git clone --mirror ${CI_REPOSITORY_URL} repo-mirror
+    - cd repo-mirror
+    #- git remote add github ${GITHUB_REPO_URL}
+    #- git push --mirror github
+  only:
+    - main
+    - master
+    - tags

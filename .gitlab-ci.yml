@@ -11,14 +11,13 @@ variables:
 build_multi_arch:
   stage: build
   resource_group: build_concurrency_limit
+  timeout: 4h
   parallel:
     matrix:
       - PLATFORM: linux/amd64
         ARCH_TAG: amd64
       - PLATFORM: linux/arm64
         ARCH_TAG: arm64
-      - PLATFORM: linux/arm/v7
-        ARCH_TAG: armv7
   before_script:
     # 1. Login to GitLab Registry (Intermediate Storage)
     - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
@@ -70,9 +69,7 @@ push_manifest:
         --tag ${IMAGE_NAME}:${DATE_TAG} \
         --tag ${IMAGE_NAME}:latest \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-amd64 \
-        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64 \
-        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-armv7
-
+        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64
     - echo "Successfully pushed multi-arch manifest"
     
     # 2. Cleanup (Optional: Remove the temporary architecture-specific tags from GitLab)

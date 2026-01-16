@@ -10,7 +10,7 @@ variables:
 # --- STAGE 1: PARALLEL BUILDS (Shell Runner) ---
 build_multi_arch:
   stage: build
-  # No image: or services: defined because this runs on the shell host
+  resource_group: build_concurrency_limit
   parallel:
     matrix:
       - PLATFORM: linux/amd64

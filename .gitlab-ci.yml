@@ -21,8 +21,6 @@ build_multi_arch:
         ARCH_TAG: amd64
       - PLATFORM: linux/arm64
         ARCH_TAG: arm64
-      - PLATFORM: linux/arm/v7
-        ARCH_TAG: armv7
   before_script:
     # Authenticate Kaniko with GitLab Registry
     - mkdir -p /kaniko/.docker
@@ -64,8 +62,7 @@ push_manifest:
         --tag ${IMAGE_NAME}:${DATE_TAG} \
         --tag ${IMAGE_NAME}:latest \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-amd64 \
-        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64 \
-        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-armv7
+        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64
 
     - echo "Successfully pushed multi-arch manifest to ${IMAGE_NAME}:latest"
   after_script:

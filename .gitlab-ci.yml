@@ -11,7 +11,7 @@ variables:
 # This hidden job (.) contains the logic used by both architectures
 .build_core: &build_core
   stage: build
-  resource_group: build_concurrency_limit
+  #resource_group: build_concurrency_limit
   timeout: 4h
   before_script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"

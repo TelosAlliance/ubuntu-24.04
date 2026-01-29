@@ -10,10 +10,11 @@ ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
 # Golang env
-ENV GO_VERSION=1.24.4
+ENV GO_VERSION=1.25.6
 ENV GO_HOME /opt/go
 ENV GOCACHE $GO_HOME/go-cache
-ENV GOPATH  $GO_HOME/work
+ENV GOPATH $GO_HOME
+ENV GOMODCACHE $GO_HOME/pkg/mod
 
 # Rust env
 ENV RUST_HOME /opt/rust
@@ -21,12 +22,12 @@ ENV CARGO_HOME $RUST_HOME
 ENV RUSTUP_HOME $RUST_HOME/.rustup
 
 # NodeJS env
-ENV NODE_VERSION v20.18.0
+ENV NODE_VERSION v20.20.0
 ENV NODE_BUILD node-$NODE_VERSION-linux-x64
 ENV NODE_BIN /opt/node-$NODE_VERSION-linux-x64/bin
 
 # Set PATH to include custom bin directories
-ENV PATH $GOPATH/bin:$GOROOT/bin:$RUST_HOME/bin:$NODE_BIN:$PATH
+ENV PATH $GO_HOME/bin:$RUST_HOME/bin:$NODE_BIN:$PATH
 
 ARG TARGETARCH
 ARG TARGETPLATFORM
@@ -96,7 +97,11 @@ apt-get install -y --no-install-recommends \
   python3-pip \
   software-properties-common \
   unzip \
-  wget
+  wget \
+  libxml2-dev \
+  libxslt1-dev
+
+python3 -m pip install --break-system-packages lxml rstr
 
 # Install AWS CLI with better error handling
 echo "Installing AWS CLI for \$AWS_ARCH..."
@@ -162,7 +167,9 @@ chmod 777 "\$RUST_HOME"
 
 # Create go directory
 mkdir -p "\$GO_HOME"
+mkdir -p "\$GOMODCACHE"
 chmod 777 "\$GO_HOME"
+chmod 777 "\$GOMODCACHE"
 
 # Install gstreamer
 apt-get install -y --no-install-recommends \

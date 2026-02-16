@@ -68,20 +68,20 @@ push_manifest:
     - docker info
     - echo "${DH_USER_TOKEN}" | docker login -u "${DH_USER_NAME}" --password-stdin
     - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
+    - docker buildx create --use --name "manifest-${CI_JOB_ID}" --driver docker-container
+    - docker buildx inspect --bootstrap
   script:
     - export DATE_TAG=$(date +%Y-%m-%d)
     - echo "Merging multi-arch images into manifest..."
-    
-    # Create the manifest list on Docker Hub using the artifacts from the two jobs
     - |
       docker buildx imagetools create \
-        --tag ${IMAGE_NAME}:${DATE_TAG} \
-        --tag ${IMAGE_NAME}:latest \
+        --tag ci-${IMAGE_NAME}:${DATE_TAG} \
+        --tag ci-${IMAGE_NAME}:latest \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-amd64 \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64
     - echo "Successfully pushed multi-arch manifest"
-    
   after_script:
+    - docker buildx rm "manifest-${CI_JOB_ID}" || true
     - docker logout
     - docker logout "${CI_REGISTRY}"
   only:

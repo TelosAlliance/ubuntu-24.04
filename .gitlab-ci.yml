@@ -12,7 +12,7 @@ variables:
 .build_core: &build_core
   stage: build
   #resource_group: build_concurrency_limit
-  timeout: 4h
+  timeout: 3h
   before_script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
         
@@ -55,6 +55,7 @@ build_arm64:
   variables:
     PLATFORM: linux/arm64
     ARCH_TAG: arm64
+  timeout: 3h
   tags:
     - arm64-shell  # Matches the tag you added to your new runner
 

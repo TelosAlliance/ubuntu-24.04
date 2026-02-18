@@ -76,8 +76,8 @@ push_manifest:
     - echo "Merging multi-arch images into manifest..."
     - |
       docker buildx imagetools create \
-        --tag ci-${IMAGE_NAME}:${DATE_TAG} \
-        --tag ci-${IMAGE_NAME}:latest \
+        --tag ${IMAGE_NAME}:ci-${DATE_TAG} \
+        --tag ${IMAGE_NAME}:ci-latest \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-amd64 \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64
     - echo "Successfully pushed multi-arch manifest"

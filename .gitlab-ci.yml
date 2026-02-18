@@ -77,10 +77,16 @@ push_manifest:
     - |
       docker buildx imagetools create \
         --tag ${IMAGE_NAME}:ci-${DATE_TAG} \
+        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-amd64 \
+        ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64
+    - |
+      docker buildx imagetools create \
         --tag ${IMAGE_NAME}:ci-latest \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-amd64 \
         ${CI_REGISTRY_IMAGE}:build-${CI_COMMIT_SHORT_SHA}-arm64
-    - echo "Successfully pushed multi-arch manifest"
+    - echo "Verifying manifests..."
+    - docker buildx imagetools inspect ${IMAGE_NAME}:ci-${DATE_TAG}
+    - docker buildx imagetools inspect ${IMAGE_NAME}:ci-latest
   after_script:
     - docker buildx rm "manifest-${CI_JOB_ID}" || true
     - docker logout

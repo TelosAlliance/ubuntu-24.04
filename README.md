@@ -2,6 +2,7 @@
 
 This container is based on Ubuntu 24.04, but contains many additional packages for software development, some of which are not part of the official repositories.
 It is intended to serve as build environment for many of our projects.
+The container build process has been upgraded to include both AMD64 and ARM64 architectures in the container.  
 
 DockerHub link: https://hub.docker.com/r/telosalliance/ubuntu-24.04
 
@@ -71,6 +72,8 @@ docker-%:
 If you need to make changes, you can also clone this repository and build it yourself.
 
 #### Building
+
+Building will currently also push the successfully completed image to Docker Hub as a multiarch image.
 
 ```shell
 make

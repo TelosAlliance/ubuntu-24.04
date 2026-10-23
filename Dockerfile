@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1.3-labs
 # vim:syntax=dockerfile
 #FROM ubuntu:noble-20240904.1
-FROM ubuntu:noble-20250910
+#FROM ubuntu:noble-20250910
+FROM ubuntu:noble-20260930.1
 
 # Set this before `apt-get` so that it can be done non-interactively
 ENV DEBIAN_FRONTEND noninteractive
@@ -10,7 +11,7 @@ ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
 # Golang env
-ENV GO_VERSION=1.25.6
+ENV GO_VERSION=1.27.3
 ENV GO_HOME /opt/go
 ENV GOCACHE $GO_HOME/go-cache
 ENV GOPATH $GO_HOME
@@ -22,7 +23,8 @@ ENV CARGO_HOME $RUST_HOME
 ENV RUSTUP_HOME $RUST_HOME/.rustup
 
 # NodeJS env
-ENV NODE_VERSION v20.20.0
+#ENV NODE_VERSION v20.20.0
+ENV NODE_VERSION v24.22.1
 ENV NODE_BUILD node-$NODE_VERSION-linux-x64
 ENV NODE_BIN /opt/node-$NODE_VERSION-linux-x64/bin
 
@@ -123,11 +125,13 @@ apt-get update
 apt-get install -y --no-install-recommends cmake
 
 # Use NodeSource's NodeJS repository
-curl -sSfL https://deb.nodesource.com/setup_20.x | bash -
+#curl -sSfL https://deb.nodesource.com/setup_20.x | bash -
+curl -sSfL https://deb.nodesource.com/setup_24.x | bash -
 apt-get install -y --no-install-recommends nodejs
 
 # Install nvm binary
-curl -sSfL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+#curl -sSfL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+curl -sSfL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash
 
 # Install other javascript package managers
 npm install -g yarn pnpm

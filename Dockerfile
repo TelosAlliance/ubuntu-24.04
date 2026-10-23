@@ -266,7 +266,7 @@ apt-get install -y \
   ninja-build \
   opus-tools \
   python3-pyelftools \
-  sbsigntools \
+  sbsigntool \
   uuid-runtime
 
 # Install architecture-specific libc6-dev packages

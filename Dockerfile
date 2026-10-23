@@ -82,8 +82,10 @@ EOF
 # Do everything in one RUN command
 RUN /bin/bash <<EOF
 set -euxo pipefail
-# Enable support for adding 32-bit packages
-dpkg --add-architecture i386
+# Enable support for adding 32-bit packages (x86 only; ports.ubuntu.com has no i386)
+if [ "$TARGETARCH" = "amd64" ]; then
+  dpkg --add-architecture i386
+fi
 
 # Load architecture variables
 source /tmp/arch_vars.sh
@@ -237,15 +239,17 @@ apt-get install -y --no-install-recommends \
   vim \
   zip \
   zlib1g-dev
-# for 32-bit support
-apt-get install -y --no-install-recommends \
-  libc6:i386 libstdc++6:i386 lib32z1 \
-  gcc-multilib g++-multilib \
-  libgtest-dev:i386 \
-  libc6-dev:i386 \
-  libz-dev:i386 \
-  libglib2.0-dev:i386 \
-  libssl-dev:i386
+# for 32-bit support (x86 only)
+if [ "$TARGETARCH" = "amd64" ]; then
+  apt-get install -y --no-install-recommends \
+    libc6:i386 libstdc++6:i386 lib32z1 \
+    gcc-multilib g++-multilib \
+    libgtest-dev:i386 \
+    libc6-dev:i386 \
+    libz-dev:i386 \
+    libglib2.0-dev:i386 \
+    libssl-dev:i386
+fi
 # Additional requirements for XDP
 apt-get install -y \
   libbpf-dev \
@@ -262,7 +266,7 @@ apt-get install -y \
   ninja-build \
   opus-tools \
   python3-pyelftools \
-  sbsigntool \
+  sbsigntools \
   uuid-runtime
 
 # Install architecture-specific libc6-dev packages

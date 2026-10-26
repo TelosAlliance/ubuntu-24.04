@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1.3-labs
 # vim:syntax=dockerfile
 #FROM ubuntu:noble-20240904.1
-FROM ubuntu:noble-20250910
+#FROM ubuntu:noble-20250910
+FROM ubuntu:noble-20260930.1
 
 # Set this before `apt-get` so that it can be done non-interactively
 ENV DEBIAN_FRONTEND noninteractive
@@ -10,10 +11,11 @@ ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
 # Golang env
-ENV GO_VERSION=1.24.4
+ENV GO_VERSION=1.27.3
 ENV GO_HOME /opt/go
 ENV GOCACHE $GO_HOME/go-cache
-ENV GOPATH  $GO_HOME/work
+ENV GOPATH $GO_HOME
+ENV GOMODCACHE $GO_HOME/pkg/mod
 
 # Rust env
 ENV RUST_HOME /opt/rust
@@ -21,12 +23,13 @@ ENV CARGO_HOME $RUST_HOME
 ENV RUSTUP_HOME $RUST_HOME/.rustup
 
 # NodeJS env
-ENV NODE_VERSION v20.18.0
+#ENV NODE_VERSION v20.20.0
+ENV NODE_VERSION v24.22.1
 ENV NODE_BUILD node-$NODE_VERSION-linux-x64
 ENV NODE_BIN /opt/node-$NODE_VERSION-linux-x64/bin
 
 # Set PATH to include custom bin directories
-ENV PATH $GOPATH/bin:$GOROOT/bin:$RUST_HOME/bin:$NODE_BIN:$PATH
+ENV PATH $GO_HOME/bin:$RUST_HOME/bin:$NODE_BIN:$PATH
 
 ARG TARGETARCH
 ARG TARGETPLATFORM
@@ -79,6 +82,10 @@ EOF
 # Do everything in one RUN command
 RUN /bin/bash <<EOF
 set -euxo pipefail
+# Enable support for adding 32-bit packages (x86 only; ports.ubuntu.com has no i386)
+if [ "$TARGETARCH" = "amd64" ]; then
+  dpkg --add-architecture i386
+fi
 
 # Load architecture variables
 source /tmp/arch_vars.sh
@@ -96,7 +103,11 @@ apt-get install -y --no-install-recommends \
   python3-pip \
   software-properties-common \
   unzip \
-  wget
+  wget \
+  libxml2-dev \
+  libxslt1-dev
+
+python3 -m pip install --break-system-packages lxml rstr
 
 # Install AWS CLI with better error handling
 echo "Installing AWS CLI for \$AWS_ARCH..."
@@ -116,11 +127,13 @@ apt-get update
 apt-get install -y --no-install-recommends cmake
 
 # Use NodeSource's NodeJS repository
-curl -sSfL https://deb.nodesource.com/setup_20.x | bash -
+#curl -sSfL https://deb.nodesource.com/setup_20.x | bash -
+curl -sSfL https://deb.nodesource.com/setup_24.x | bash -
 apt-get install -y --no-install-recommends nodejs
 
 # Install nvm binary
-curl -sSfL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+#curl -sSfL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+curl -sSfL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash
 
 # Install other javascript package managers
 npm install -g yarn pnpm
@@ -162,7 +175,9 @@ chmod 777 "\$RUST_HOME"
 
 # Create go directory
 mkdir -p "\$GO_HOME"
+mkdir -p "\$GOMODCACHE"
 chmod 777 "\$GO_HOME"
+chmod 777 "\$GOMODCACHE"
 
 # Install gstreamer
 apt-get install -y --no-install-recommends \
@@ -195,6 +210,7 @@ apt-get install -y --no-install-recommends \
   gdb \
   gettext \
   git \
+  git-lfs \
   gosu \
   jq \
   kmod \
@@ -223,7 +239,17 @@ apt-get install -y --no-install-recommends \
   vim \
   zip \
   zlib1g-dev
-
+# for 32-bit support (x86 only)
+if [ "$TARGETARCH" = "amd64" ]; then
+  apt-get install -y --no-install-recommends \
+    libc6:i386 libstdc++6:i386 lib32z1 \
+    gcc-multilib g++-multilib \
+    libgtest-dev:i386 \
+    libc6-dev:i386 \
+    libz-dev:i386 \
+    libglib2.0-dev:i386 \
+    libssl-dev:i386
+fi
 # Additional requirements for XDP
 apt-get install -y \
   libbpf-dev \

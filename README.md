@@ -73,11 +73,25 @@ If you need to make changes, you can also clone this repository and build it you
 
 #### Building
 
-Building will currently also push the successfully completed image to Docker Hub as a multiarch image.
+Building also pushes the successfully completed image to Docker Hub.
+
+The recommended way to produce the multiarch (amd64 + arm64) image is to build each architecture natively and then combine them:
 
 ```shell
-make
+# On an amd64 host
+make image-amd64
+
+# On an arm64 host
+make image-arm64
+
+# On either host, once both of the above have finished
+make manifest
 ```
+
+`make` (or `make image`) builds both architectures in a single command using `buildx` and qemu emulation.
+Emulated arm64 builds are very slow and can fail on some hosts (for example, `tar` errors with `Invalid argument` while installing Go), so prefer the native builds above.
+
+To test an architecture without pushing, run `docker build --progress=plain -t ubuntu-24.04-test .` on a host of that architecture.
 
 #### Running
 
